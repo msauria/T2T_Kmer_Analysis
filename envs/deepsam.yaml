@@ -1,0 +1,8 @@
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - deeptools == 3.4.3
+  - pysam == 0.16.0
+  - samtools == 1.10
+  - numpy == 1.19.2

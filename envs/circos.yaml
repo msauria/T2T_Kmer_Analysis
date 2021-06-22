@@ -1,0 +1,5 @@
+channels:
+  - bioconda
+dependencies:
+  - circos == 0.69.6
+  - perl-statistics-basic == 1.6611

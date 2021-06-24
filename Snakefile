@@ -59,11 +59,13 @@ for i in range(len(BSAT_REGIONS)):
     BSAT_PAIR_DICT[BSAT_REGIONS[i]] = []
     for j in range(i + 1, len(BSAT_REGIONS)):
         BSAT_PAIR_DICT[BSAT_REGIONS[i]].append(BSAT_REGIONS[j])
+ALL_KMERS = list(set(KMERS + HOR_KMERS + BSAT_KMERS))
 
 ALL_REGION_SET = "|".join(ALL_REGIONS)
 KMER_SET = "|".join(KMERS)
 HOR_KMER_SET = "|".join(HOR_KMERS)
 BSAT_KMER_SET = "|".join(BSAT_KMERS)
+ALL_KMER_SET = "|".join(ALL_KMERS)
 ARRAY_SET = "|".join(ARRAYS)
 NON_CT_REGION_SET = "|".join(NON_CT_REGIONS)
 CT_REGION_SET = "|".join(CT_REGIONS)
@@ -89,7 +91,7 @@ rule all:
     input:
         expand("plots/circos_{array}_{kmer}.svg", kmer=KMERS,
                array=['all', 'mismatch', 'hor', 'hsat',
-                      'censat', 'mon', 'bsat', 'ct']),
+                      'censat', 'mon', 'bsat', 'ct'])#,
         expand("results/chm13v1_HOR_{kmer}mers.txt", kmer=HOR_KMERS),
         expand("results/chm13v1_BSAT_{kmer}mers.txt", kmer=BSAT_KMERS)
 
@@ -307,7 +309,7 @@ rule create_full_kmc_db:
     threads:
         MAXTHREADS
     wildcard_constraints:
-        kmer=KMER_SET
+        kmer=ALL_KMER_SET
     log:
         "logs/kmc/chm13v1_{kmer}.log"
     conda:
@@ -1270,7 +1272,7 @@ rule compile_BSAT_intersections:
         prefix="BSAT_{kmer}/chm13v1_"
     wildcard_constraints:
         kmer=BSAT_KMER_SET
-    conda:
+    shell:
         """
         REGIONS=({params.regions})
         R="${{REGIONS[0]}}"

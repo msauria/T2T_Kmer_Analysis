@@ -302,8 +302,8 @@ def get_all_color(a1, a2, r1, r2):
 
 def write_histograms(hist_set, data, regions, arrays, anames, aname, kmer):
     output = open("circos_data/histogram_{}_{}.txt".format(aname, kmer), 'w')
-    w = 250000
-    w2 = w * 1.07
+    w = 200000
+    w2 = w * 1.5
     keep = []
     for i, a in enumerate(data['array']):
         if a.decode('utf8') in hist_set:
@@ -317,25 +317,18 @@ def write_histograms(hist_set, data, regions, arrays, anames, aname, kmer):
         chroms[i] = arrays['chrom'][r]
     for chrom in numpy.unique(chroms):
         where = numpy.where(chroms == chrom)[0]
-        dist = mids[where[1:]] - mids[where[:-1]]
-        i = 0
-        s = None
-        while i < dist.shape[0]:
-            while i < dist.shape[0]:
-                if dist[i] < w2:
-                    break
-                i += 1
-            if i < dist.shape[0]:
-                s = i
-                while i < dist.shape[0]:
-                    if dist[i] >= w2:
-                        break
-                    i += 1
-                e = i
-                m = numpy.mean(mids[where[s]:(where[e] + 1)])
-                mids[where[s]:(where[e] + 1)] = numpy.round(numpy.linspace(
-                    m - (e - s) * w2 / 2, m + (e - s) * w2 / 2,
-                    e - s + 1)).astype(numpy.int32)
+        awhere = numpy.where(arrays['chrom'] == chrom)[0]
+        cstart = arrays['start'][awhere[0]]
+        cend = arrays['end'][awhere[-1]]
+        cmids = mids[where]
+        for i in range(1000):
+            dist = cmids[1:] - cmids[:-1]
+            force = (-numpy.minimum(w2, numpy.r_[cmids[0] - cstart, dist]) +
+                     numpy.minimum(w2, numpy.r_[dist, cend - cmids[-1]])) * 0.5
+            if numpy.sum(force != 0) == 0:
+                break
+            cmids += numpy.round(force).astype(numpy.int32)
+        mids[where] = cmids
     prev_chrom = ""
     for i, j in enumerate(keep):
         mid = mids[i]
@@ -346,27 +339,40 @@ def write_histograms(hist_set, data, regions, arrays, anames, aname, kmer):
         total = data['total'][j]
         unique = data['counts'][j, j]
         chrom = arrays['chrom'][r].decode('utf8').replace('chr', 'hs')
-        if chrom != prev_chrom:
-            count = numpy.zeros(data['acounts'].shape[1] + 3)
-            prev_chrom = chrom
         index = anames.index(array)
-        acounts = numpy.cumsum(numpy.r_[unique, data['acounts'][j, :], data['centro'][j]] / total)
-        print("{} {} {} {} z={},fill_color={}".format(
-              chrom, s, e, acounts[0], acounts.shape[0], array), file=output)
-        for k in range(1, acounts.shape[0]):
-            if (acounts[k - 1] == acounts[k]) and (count[acounts.shape[0] - k] >= 2):
+        names = anames[:index] + anames[(index + 1):] + ["centro"]
+        acounts = numpy.cumsum(numpy.r_[unique, data['acounts'][j, index],
+                                        data['acounts'][j, :index],
+                                        data['acounts'][j, (index + 1):],
+                                        data['centro'][j]] / total)
+        if chrom != prev_chrom:
+            count = numpy.zeros(acounts.shape[0])
+            prev_chrom = chrom
+        acol = anames[index]
+        print("{} {} {} {} z={},fill_color={},color={}".format(
+              chrom, s, e, 1, 1, 'black', 'black'), file=output)
+        if (acounts[0] > 0 or count[0] < 2):
+            print("{} {} {} {} z={},fill_color={},color={}".format(
+                  chrom, s, e, acounts[0], acounts.shape[0] + 1,
+                  "white", "white"), file=output)
+            count[0] += 1
+        if (acounts[1] > acounts[0] or count[1] < 2):
+            print("{} {} {} {} z={},fill_color={},color={}".format(
+                  chrom, s, e, acounts[1], acounts.shape[0],
+                  anames[index],anames[index]), file=output)
+            count[1] += 1
+        for k in range(2, acounts.shape[0]):
+            if (acounts[k - 1] == acounts[k]) and (count[k] >= 2):
                 continue
-            if k - 1 == index:
-                col = 'white'
-            elif k == acounts.shape[0] - 1:
-                col = 'centro'
-            else:
-                col = anames[k - 1]
-            print("{} {} {} {} z={},fill_color={}".format(
-                  chrom, s, e, acounts[k], acounts.shape[0] - k, col), file=output)
-            count[acounts.shape[0] - k] += 1
-        print("{} {} {} {} z={},fill_color={}".format(
-              chrom, s, e, 1, 0, 'black'), file=output)
+            print("{} {} {} {} z={},fill_color={},color={}".format(
+                  chrom, s, e, acounts[k], acounts.shape[0] - k + 1,
+                  names[k - 2], names[k - 2]), file=output)
+            count[k] += 1
+        s = mid - int(w * 1.25) // 2
+        e = mid + int(w * 1.25) // 2
+        print("{} {} {} {} z={},fill_color={},color={},thickness=1".format(
+              chrom, s, e, 0.997, 0,
+              anames[index], anames[index]), file=output)
     output.close()
 
 if __name__ == "__main__":

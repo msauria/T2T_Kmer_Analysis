@@ -92,8 +92,8 @@ rule all:
         expand("plots/circos_{array}_{kmer}.svg", kmer=KMERS,
                array=['all', 'mismatch', 'hor', 'hsat',
                       'censat', 'mon', 'bsat', 'ct'])#,
-        expand("results/chm13v1_HOR_{kmer}mers.txt", kmer=HOR_KMERS),
-        expand("results/chm13v1_BSAT_{kmer}mers.txt", kmer=BSAT_KMERS)
+        #expand("results/chm13v1_HOR_{kmer}mers.txt", kmer=HOR_KMERS),
+        #expand("results/chm13v1_BSAT_{kmer}mers.txt", kmer=BSAT_KMERS)
 
 
 ######## Get software #########

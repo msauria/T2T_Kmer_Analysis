@@ -1,0 +1,17 @@
+.snakemake
+circos_data
+circos_etc/circos_*
+circos_etc/colors_*
+data/t2t_cenSatAnnotation.bed
+data/t2t_chm13v1_repeatmask.bb
+fasta
+logs
+.DS_Store
+KMC
+KMC_db
+HOR_*
+BSAT_*
+results/*HOR*
+results/*BSAT*
+intersections_*
+bin/kmc*

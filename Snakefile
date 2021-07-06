@@ -1,4 +1,5 @@
 TMPDIR = "/localscratch/msauria"
+SYSTEM="linux.x86_64"
 MAXMEM = "1024"
 MAXTHREADS = 100
 THRESHOLD = 100000
@@ -91,7 +92,8 @@ rule all:
     input:
         expand("plots/circos_{array}_{kmer}.svg", kmer=KMERS,
                array=['all', 'mismatch', 'hor', 'hsat',
-                      'censat', 'mon', 'bsat', 'ct'])#,
+                      'censat', 'mon', 'bsat', 'ct']),
+        "results/chm13v1_100mer_coverage.bed"
         #expand("results/chm13v1_HOR_{kmer}mers.txt", kmer=HOR_KMERS),
         #expand("results/chm13v1_BSAT_{kmer}mers.txt", kmer=BSAT_KMERS)
 
@@ -125,6 +127,23 @@ rule build_KMC:
         cp KMC/bin/kmc_dump bin/
         chmod a+rx bin/kmc_dump
         """
+
+rule download_software:
+    output:
+        "bin/{sw}"
+    wildcard_constraints:
+        sw="wigToBigWig"
+    params:
+        sw="{sw}",
+        system=SYSTEM
+    log:
+        "logs/Encode/download/{sw}.log"
+    shell:
+        """
+        wget http://hgdownload.soe.ucsc.edu/admin/exe/{params.system}/{params.sw} -O {output}
+        chmod a+rx {output}
+        """
+
 
 
 ######## Get genomic data #########
@@ -547,6 +566,52 @@ rule count_db_kmers:
         """
 
 
+######## Create Kmer BigWigs #########
+
+rule create_kmer_wiggle:
+    input:
+        fa="fasta/chm13v1.fasta",
+        db="KMC_db/chm13v1_{kmer}.kmc_pre",
+        kmc="bin/kmc_genome_counts"
+    output:
+        temp("Kmer_BigWigs/chm13v1_{kmer}mer.wig")
+    params:
+        prefix="KMC_db/chm13v1_{kmer}",
+        chroms=CHROMS,
+        tmpdir=TMPDIR
+    wildcard_constraints:
+        kmer=ALL_KMER_SET
+    threads:
+        len(CHROMS)
+    conda:
+        "envs/kmc.yaml"
+    shell:
+        """
+        tmpdir=$(mktemp -d -p {params.tmpdir});
+        for C in {params.chroms}; do \
+            {input.kmc} -ch$C {params.prefix} {input.fa} > $tmpdir/$C.wig & \
+        done; wait
+        wigs=""
+        for C in {params.chroms}; do wigs="$wigs $tmpdir/$C.wig"; done;
+        cat $wigs > {output}
+        rm -r $tmpdir
+        """
+
+rule create_kmer_bigwig:
+    input:
+        wig="Kmer_BigWigs/chm13v1_{kmer}mer.wig",
+        wigtobigwig="bin/wigToBigWig",
+        sizes="fasta/chm13v1.chrom.sizes"
+    output:
+        "Kmer_BigWigs/chm13v1_{kmer}mer.bw"
+    wildcard_constraints:
+        kmer=ALL_KMER_SET
+    shell:
+        """
+        {input.wigtobigwig} -clip {input.wig} {input.sizes} {output}
+        """
+
+
 ######## Intersect KMC DBs #########
 
 rule intersect_db_pairs:
@@ -744,7 +809,7 @@ rule subcompile_ct_intersections:
         echo -n "{params.region}" > {output}
         for R in ${{REGIONS[*]}}; do
             if [[ $R == {params.region} ]]; then
-                awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/unique.txt >> {output}
+                awk '{{ printf ",%s", $1 }}' KMC_db/chm13v1_{params.region}_{params.kmer}.count >> {output}
             else
                 if [ -e intersections_{params.kmer}/chm13v1_{params.region}/${{R}}.txt ]; then
                     awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/${{R}}.txt >> {output}
@@ -753,6 +818,7 @@ rule subcompile_ct_intersections:
                 fi
             fi
         done
+        awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/unique.txt >> {output}
         awk '{{ printf ",%s", $1 }}' KMC_db/chm13v1_{params.region}_{params.kmer}.count >> {output}
         """
 
@@ -786,6 +852,20 @@ rule compile_ct_intersections:
     shell:
         """
         bin/compile_intersections.py {params.kmer} {params.regions} {params.arrays} {output}
+        """
+
+rule get_kmer_coverage:
+    input:
+        "Kmer_BigWigs/chm13v1_{kmer}mer.bw"
+    output:
+        "results/chm13v1_{kmer}mer_coverage.bed"
+    params:
+        kmer="{kmer}"
+    wildcard_constraints:
+        kmer=ALL_KMER_SET
+    shell:
+        """
+        bin/get_unique_kmer_coverage.py {input} {output} {params.kmer}
         """
 
 

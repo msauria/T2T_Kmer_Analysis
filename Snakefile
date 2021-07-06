@@ -770,7 +770,7 @@ rule subcompile_intersections:
         echo -n "{params.region}" > {output}
         for R in ${{REGIONS[*]}}; do
             if [[ $R == {params.region} ]]; then
-                awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/unique.txt >> {output}
+                awk '{{ printf ",%s", $1 }}' KMC_db/chm13v1_{params.region}_{params.kmer}.count >> {output}
             else
                 if [ -e intersections_{params.kmer}/chm13v1_{params.region}/${{R}}.txt ]; then
                     awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/${{R}}.txt >> {output}
@@ -779,6 +779,7 @@ rule subcompile_intersections:
                 fi
             fi
         done
+        awk '{{ printf ",%s", $1 }}' intersections_{params.kmer}/chm13v1_{params.region}/unique.txt >> {output}
         awk '{{ printf ",%s", $1 }}' KMC_db/chm13v1_{params.region}_{params.kmer}.count >> {output}
         """
 

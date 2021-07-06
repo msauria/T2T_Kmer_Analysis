@@ -66,14 +66,8 @@ def load_data(fname):
                                                 ('counts', numpy.float32, (n,)),
                                                 ('acounts', numpy.float32, (len(anames),)),
                                                 ('centro', numpy.float32),
+                                                ('unique', numpy.float32),
                                                 ('total', numpy.int32)]))
-    data['acounts'] -= data['counts'][numpy.arange(data.shape[0]),
-                                      numpy.arange(data.shape[0])].reshape(-1, 1)
-    for i in range(data.shape[0]):
-        index = anames.index(data['array'][i].decode('utf8'))
-        data['acounts'][i, :index] -= data['acounts'][i, index]
-        data['acounts'][i, (index + 1):] -= data['acounts'][i, index]
-        data['centro'][i] -= numpy.sum(data['acounts'][i, :]) + data['counts'][i, i]
     return data, anames, regions
 
 def write_colors(colors, aname, kmer):
@@ -337,7 +331,7 @@ def write_histograms(hist_set, data, regions, arrays, anames, aname, kmer):
         r = numpy.where(data['region'][j] == arrays['region'])[0][0]
         array = arrays['array'][r].decode('utf8')
         total = data['total'][j]
-        unique = data['counts'][j, j]
+        unique = data['unique'][j]
         chrom = arrays['chrom'][r].decode('utf8').replace('chr', 'hs')
         index = anames.index(array)
         names = anames[:index] + anames[(index + 1):] + ["centro"]

@@ -38,7 +38,7 @@ def load_arrays(fname):
         chrom, start, end, region, array, color = line.rstrip().split()[:6]
         if chrom.encode('utf8') not in chroms:
             chroms.append(chrom.encode('utf8'))
-        if color not in color_set or array not in array_count:
+        if color not in color_set:
             array_count.setdefault(array, 0)
             colors["{}_{}".format(array, array_count[array])] = color
             color_set.add(color)
@@ -124,8 +124,10 @@ def write_ideogram(arrays, chroms, aname, kmer, version):
     output.close()
 
 def write_links(data, arrays, regions, aname, kmer, minval, maxval, version):
-    w = 9.5
-    w2 = w / 19
+    #w = 9.5
+    #w2 = w / 19
+    w = 9
+    w2 = w / 9
     span = maxval - minval
     if aname == 'ct':
         cfunc = get_ct_color
@@ -250,8 +252,55 @@ def get_hor_color(a1, a2, r1, r2, col1, col2):
     supra45 = set(['hor_15_1', 'hor_15_2', 'hor_19_2', 'hor_19_4', 'hor_20_4', 'hor_22_2',
                    'hor_22_6', 'hor_4_4', 'hor_5_6', 'hor_5_8', 'hor_7_1',
                    'dhor_12_8'])
+    """
+    supra1 = set(["hor_1_5","dhor_10_2","hor_10_1","hor_10_2","hor_10_3",
+                  "hor_10_4","dhor_10_3","dhor_12_4","hor_12_1","hor_12_2",
+                  "dhor_12_5","hor_16_3","hor_16_4","hor_16_5","dhor_19_8",
+                  "hor_19_9","hor_19_10","hor_19_11","hor_19_12","hor_19_13",
+                  "hor_19_14","dhor_3_4","hor_3_2","hor_3_3","hor_3_4",
+                  "dhor_5_1","hor_5_3","hor_5_4","hor_5_5","hor_5_6",
+                  "dhor_7_5","hor_7_2"])
+    supra2 = set(["hor_13_3","hor_13_4","dhor_13_1","dhor_14_1","hor_14_3",
+                  "dhor_14_2","hor_15_4","dhor_16_2","dhor_16_3","hor_16_1",
+                  "hor_16_2","hor_16_6","hor_16_7","dhor_16_4","dhor_16_5",
+                  "dhor_16_6","dhor_16_7","dhor_18_3","dhor_18_4","hor_18_1",
+                  "hor_18_2","hor_18_3","hor_18_4","hor_18_5","hor_18_6",
+                  "hor_18_7","hor_18_8","hor_18_9","dhor_18_5","dhor_2_1",
+                  "hor_2_1","hor_2_2","hor_2_3","hor_2_4","hor_2_5","dhor_2_2",
+                  "dhor_20_5","dhor_20_6","hor_20_1","hor_20_2","hor_21_3",
+                  "hor_21_4","hor_21_5","hor_21_6","dhor_21_1","dhor_22_2",
+                  "dhor_22_3","hor_22_9","dhor_22_4","dhor_22_7","dhor_22_9",
+                  "hor_4_1","hor_4_2","hor_4_3","dhor_7_2","dhor_7_4",
+                  "hor_8_1","hor_8_2","dhor_9_3","dhor_9_4","hor_9_1",
+                  "dhor_9_6"])
+    supra3 = set(["hor_1_1","hor_1_2","hor_1_3","hor_1_4","hor_1_6","hor_1_7",
+                  "hor_1_8","hor_1_9","dhor_11_1","dhor_11_2","hor_11_1",
+                  "hor_11_2","hor_11_3","hor_11_4","dhor_11_3","hor_11_5",
+                  "dhor_11_5","hor_17_1","hor_17_2","hor_17_3","dhor_17_1",
+                  "dhor_19_5","dhor_5_3","dhor_X_2","hor_X_1"])
+    supra45 = set(["hor_13_1","hor_14_2","hor_15_1","hor_15_2","hor_15_3",
+                  "hor_20_5","hor_20_6","hor_20_7","hor_20_8","hor_20_9",
+                  "hor_20_10","hor_20_11","hor_21_1","hor_22_8","hor_Y_1",
+                  "dhor_1_1","dhor_1_2","dhor_1_3","dhor_1_4","dhor_11_4",
+                  "dhor_12_1","dhor_12_7","hor_13_2","hor_14_1","hor_19_1",
+                  "hor_19_2","hor_19_3","dhor_19_1","dhor_19_2","hor_19_4",
+                  "hor_19_5","hor_19_6","dhor_19_3","dhor_19_7","hor_19_7",
+                  "hor_19_8","dhor_20_7","hor_20_4","hor_21_2","hor_4_4",
+                  "hor_5_1","hor_5_2","hor_5_7","hor_5_8","dhor_5_5","hor_5_9",
+                  "dhor_7_1","hor_7_1","dhor_7_7","dhor_8_1"])
     r1 = r1.split('(')[0]
     r2 = r2.split('(')[0]
+    f1 = 'suprax'
+    f2 = 'suprax'
+    for f, fam in [('supra1', supra1), ('supra2', supra2), ('supra3', supra3),
+                   ('supra45', supra45)]:
+        if r1 in fam:
+            f1 = f
+        if r2 in fam:
+            f2 = f
+    if f1 == f2:
+        return f1
+    """
     #if col1 == col2:
     #    return col1
     if r1 in supra1 and r2 in supra1:
@@ -262,13 +311,8 @@ def get_hor_color(a1, a2, r1, r2, col1, col2):
         return 'supra3'
     if r1 in supra45 and r2 in supra45:
         return 'supra45'
-    return 'mismatch'
     """
-    r1 = r1.split('(')[0]
-    r2 = r2.split('(')[0]
-    if col1 == col2:
-        return col1
-    return mismatch
+    return 'mismatch'
 
 def get_mon_color(a1, a2, r1, r2, col1, col2):
     if a1 == 'mon':

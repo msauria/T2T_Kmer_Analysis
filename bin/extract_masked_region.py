@@ -20,7 +20,7 @@ def main():
     if elements is None:
         elements = []
     for i in range(len(elements))[::-1]:
-        if elements[i][2].split('\t')[-3] in Non_TEs:
+        if elements[i][2].split('\t')[7] in Non_TEs:
             elements.pop(i)
         else:
             elements[i] = (max(start, elements[i][0]), min(end, elements[i][1]), elements[i][2])

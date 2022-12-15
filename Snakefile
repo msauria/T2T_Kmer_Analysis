@@ -144,9 +144,14 @@ rule build_KMC:
         "envs/kmc.yaml"
     shell:
         """
+        if [[ -d KMC ]]; then
+            rm -r KMC
+        fi
         git clone https://github.com/msauria/KMC.git
+        cd KMC
         git checkout kmer_mapping
-        cd KMC && make
+        make
+        cd ../
         cp KMC/bin/kmc bin/
         chmod a+rx bin/kmc
         cp KMC/bin/kmc_genome_counts bin/
